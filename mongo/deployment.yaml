@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  name: mongodb
+
+
+---
+apiVersion: v1
+data:
+  password: cGFzc3dvcmQxMjM= #//password123
+  username: YWRtaW51c2Vy #·//adminuser
+kind: Secret
+metadata:
+  namespace: mongodb
+  creationTimestamp: null
+  name: mongo-creds
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+  namespace: mongodb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi  # Adjust storage size as per your requirements
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  namespace: mongodb
+spec:
+  replicas: 1  # Adjust as per your requirements
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:8.0  # Use the official MongoDB Docker image
+        # livenessProbe:
+        #   exec:
+        #     command:
+        #       - mongo
+        #       - --disableImplicitSessions
+        #       - --eval
+        #       - "db.adminCommand('ping')"
+        #   initialDelaySeconds: 90
+        #   periodSeconds: 10
+        #   timeoutSeconds: 10
+        #   successThreshold: 1
+        #   failureThreshold: 6
+        # readinessProbe:
+        #   exec:
+        #     command:
+        #       - mongo
+        #       - --disableImplicitSessions
+        #       - --eval
+        #       - "db.adminCommand('ping')"
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-creds
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-creds
+              key: password
+        volumeMounts:
+        - name: mongo-data-dir
+          mountPath: /data/db
+      volumes:
+      - name: "mongo-data-dir"
+        persistentVolumeClaim:
+          claimName: "mongodb-pvc"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: mongodb
+spec:
+  clusterIP: None
+  selector:
+    app: mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-np
+  namespace: mongodb
+spec:
+  type: NodePort
+  selector:
+    app: mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+    nodePort: 30007

@@ -1,0 +1,64 @@
+## Commands ##
+
+minikube:
+minikube start --listen-address=0.0.0.0
+
+
+mongodb:
+kubectl -n mongodb create -f .\mongo\deployment.yaml
+kubectl -n mongodb create -f .\mongo\mongo-client.yaml
+kubectl -n mongodb get pods
+kubectl -n mongodb exec <pod> -it bash 
+kubectl -n mongodb exec mongo-client-79674c8b7d-rhc7c -it bash
+mongosh --host mongodb --port 27017 -u adminuser -p password123
+#to redirect mongo to localhost
+kubectl -n mongodb get svc
+minikube service -n mongodb mongodb-np
+
+mongodb-use:
+db
+show databases
+use test-golang
+db.createCollection("golangcollection")
+db.createCollection("users")
+
+db.golangcollection.find()
+db.users.find().pretty()
+db.golangcollection.find(
+  {
+    name: "navindu"
+  }
+)
+
+db.golangcollection.find(
+  {
+    age : {$lt : 25}
+  }
+)
+
+
+  db.users.insertOne(
+  {
+    "name": "22",
+    "description": "first user for testing"
+  })
+///
+	ID          string    `bson:"_id,omitempty" json:"id"`
+	Name        string    `bson:"name" json:"name"`
+	Description string    `bson:"description" json:"description"`
+	Fecha       time.Time `bson:"fecha" json:"fecha"`
+///
+
+db.golangcollection.update({age : 20}, {$set: {age: 23}})
+
+db.golangcollection.remove({name: "navindu"});
+
+db.users.remove({});
+
+db.golangcollection.find({$and:[{age : {$lt : 25}}, {location: "colombo"}]});
+
+db.recordBook.aggregate([
+  {
+    $group : {_id : "$gender", result: {$sum: 1}}
+  }  
+]);

@@ -1,0 +1,4 @@
+use test-golang
+db.createCollection("golangcollection")
+
+mongodb://adminuser:password123@mongodb.mongodb.svc.cluster.local:27017
